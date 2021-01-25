@@ -2,12 +2,12 @@
 #
 # EOF (end-of-file) token is used to indicate that
 # there is no more input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, MINUS, EOF = 'INTEGER', 'MINUS', 'EOF'
 
 
 class Token(object):
   def __init__(self, type, value):
-    # token type: INTEGER, PLUS or EOF
+    # token type: INTEGER, MINUS or EOF
     self.type = type
     # token value: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '+', or None
     self.value = value
@@ -17,7 +17,7 @@ class Token(object):
 
     Examples:
       Token(INTEGER, 3)
-      Token(PLUS, '+')
+      Token(MINUS, '-')
     """
     return 'Token({type}, {value})'.format(
       type=self.type,
@@ -40,6 +40,13 @@ class Interpreter(object):
   def error(self):
     raise Exception('Error parsing input')
 
+  def skip_whitespace(self):
+    while (self.pos < len(self.text)):
+      if self.text[self.pos].isspace():
+        self.pos += 1
+      else:
+        break
+
   def get_next_token(self):
     """Lexical analyzer (also known as scanner or tokenizer)
 
@@ -47,6 +54,9 @@ class Interpreter(object):
     apart into tokens. One token at a time.
     """
     text = self.text
+
+    # move ahead to the next non-whitespace character
+    self.skip_whitespace()
 
     # is self.pos index past the end of self.text ?
     # if so, then return  EOF token because there is no more
@@ -63,14 +73,22 @@ class Interpreter(object):
     # index to point to the next character after the digit,
     # and return the INTEGER token
     if current_char.isdigit():
-      token = Token(INTEGER, int(current_char))
-      self.pos += 1
+      num = ''
+      while (self.pos < len(text)):
+        current_char = text[self.pos]
+        if current_char.isdigit():
+          num += current_char
+          self.pos += 1
+        else:
+          break
+      token = Token(INTEGER, int(num))
       return token
     
-    if current_char == '+':
-      token = Token(PLUS, current_char)
+    if current_char == '-':
+      token = Token(MINUS, current_char)
       self.pos += 1
       return token
+
     
     self.error()
 
@@ -85,7 +103,7 @@ class Interpreter(object):
       self.error()
   
   def expr(self):
-    """expr -> INTEGER PLUS INTEGER"""
+    """expr -> INTEGER MINUS INTEGER"""
     # set current token to the first token taken from the input
     self.current_token = self.get_next_token()
 
@@ -93,9 +111,9 @@ class Interpreter(object):
     left = self.current_token
     self.eat(INTEGER)
 
-    # we expect the current token to be a '+' token
+    # we expect the current token to be a '-' token
     op = self.current_token
-    self.eat(PLUS)
+    self.eat(MINUS)
 
     # we expect the current token to be a single-digit integer
     right = self.current_token
@@ -103,11 +121,11 @@ class Interpreter(object):
     # after the above call the self.current_token is set to
     # EOF token
 
-    # at this point INTEGER PLUS INTEGER sequence of tokens
+    # at this point INTEGER MINUS INTEGER sequence of tokens
     # has been successfully found and the method can just
     # return the result of adding two integers, thus
     # effectively interpreting client input
-    result = left.value + right.value
+    result = left.value - right.value
     return result
 
 
@@ -127,3 +145,21 @@ def main():
 
 if __name__ == '__main__':
   main()
+
+""" Check your understanding
+1. What is an interpreter? A program that takes a representation of code
+   and evaluates it.
+2. What is a compiler? A program that takes a representation of code and
+   produces machine code.
+3. What’s the difference between an interpreter and a compiler?
+   An interpreter will evaluate code directly, a compiler produces another
+   representation of the code (to be evaluated later)
+4. What is a token?
+   A unit of semantic meaning in written code. Could be represented by
+   one or more text characters.
+5. What is the name of the process that breaks input apart into tokens?
+   Lexical analysis, or lexing.
+6. What is the part of the interpreter that does lexical analysis called?
+   Lexical analyzer, or lexer.
+7. What are the other common names for that part of an interpreter or a compiler?
+   scanner, tokenizer
