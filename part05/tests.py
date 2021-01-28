@@ -1,7 +1,6 @@
 import unittest
 
-target = __import__("interpreter")
-Interpreter = target.Interpreter
+from interpreter import Interpreter
 
 class TestInterpreter(unittest.TestCase):
   def test_interpreter_1(self):
