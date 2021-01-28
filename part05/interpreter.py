@@ -6,7 +6,9 @@ paren_expr : \(expr\)
 factor : INTEGER
 """
 
-INTEGER, PLUS, MIN, MULT, DIV, EOF = 'INTEGER', 'PLUS', 'MIN', 'MULT', 'DIV', 'EOF'
+INTEGER, PLUS, MIN, MULT, DIV, EOF, OPEN_PAREN, CLOSE_PAREN = 'INTEGER', 'PLUS', 'MIN', 'MULT', 'DIV', 'EOF', 'OPEN_PAREN', 'CLOSE_PAREN'
+
+debug = True
 
 class Token():
   def __init__(self, type, value):
@@ -22,8 +24,8 @@ class Lexer():
     self.pos = 0
   
   def log(self, additional):
-    return
-    print(additional, "|| pos: %s, cur: '%s', rem: '%s'" % (self.pos, self.current_char(), self.text[self.pos:]))
+    if debug:
+      print(additional, "|| pos: %s, cur: '%s', rem: '%s'" % (self.pos, self.current_char(), self.text[self.pos:]))
   
   def current_char(self):
     if self.pos >= len(self.text):
@@ -67,6 +69,12 @@ class Lexer():
     elif current_char == '/':
       self.advance()
       token = Token(DIV, '/')
+    elif current_char == '(':
+      self.advance()
+      token = Token(OPEN_PAREN, '(')
+    elif current_char == ')':
+      self.advance()
+      token = Token(CLOSE_PAREN, ')')
 
     if token is None:
       self.error('Could not match next token with any known lexeme')
@@ -114,8 +122,8 @@ class Interpreter():
     return value
   
   def log(self, addition):
-    return
-    print(addition, "|| Current token: %s" % self.current_token)
+    if debug:
+      print(addition, "|| Current token: %s" % self.current_token)
   
   def term(self):
     self.log("term")
@@ -124,25 +132,44 @@ class Interpreter():
     while self.current_token.type in (MULT, DIV):
       if self.current_token.type == MULT:
         self.mult()
-        result *= self.factor()
+        if self.current_token.type == OPEN_PAREN:
+          result *= self.expr()
+        else:
+          result *= self.factor()
       if self.current_token.type == DIV:
         self.div()
-        result /= self.factor()
+        if self.current_token.type == OPEN_PAREN:
+          result /= self.expr()
+        else:
+          result /= self.factor()
     
     self.log("term returning %s" % result)
     return result
   
   def expr(self):
     self.log("expr")
+
+    if self.current_token.type == OPEN_PAREN:
+      self.eat(OPEN_PAREN)
+      result = self.expr()
+      self.eat(CLOSE_PAREN)
+      return result
+    
     result = self.term()
 
     while self.current_token.type in (PLUS, MIN):
       if self.current_token.type == PLUS:
         self.plus()
-        result += self.term()
+        if self.current_token.type == OPEN_PAREN:
+          result += self.expr()
+        else:
+          result += self.term()
       if self.current_token.type == MIN:
         self.min()
-        result -= self.term()
+        if self.current_token.type == OPEN_PAREN:
+          result -= self.expr()
+        else:
+          result -= self.term()
     
     return result
 
