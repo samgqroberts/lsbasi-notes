@@ -42,6 +42,7 @@ class Token(object):
 RESERVED_KEYWORDS = {
     'BEGIN': Token('BEGIN', 'BEGIN'),
     'END': Token('END', 'END'),
+    'DIV': Token('DIV', 'DIV')
 }
 
 
@@ -90,7 +91,7 @@ class Lexer(object):
             result += self.current_char
             self.advance()
 
-        token = RESERVED_KEYWORDS.get(result, Token(ID, result))
+        token = RESERVED_KEYWORDS.get(result.upper(), Token(ID, result))
         return token
 
     def get_next_token(self):
@@ -131,10 +132,6 @@ class Lexer(object):
             if self.current_char == '*':
                 self.advance()
                 return Token(MUL, '*')
-
-            if self.current_char == '/':
-                self.advance()
-                return Token(DIV, '/')
 
             if self.current_char == '(':
                 self.advance()
@@ -445,11 +442,11 @@ class Interpreter(NodeVisitor):
 
     def visit_Assign(self, node):
         var_name = node.left.value
-        self.GLOBAL_SCOPE[var_name] = self.visit(node.right)
+        self.GLOBAL_SCOPE[var_name.upper()] = self.visit(node.right)
 
     def visit_Var(self, node):
         var_name = node.value
-        val = self.GLOBAL_SCOPE.get(var_name)
+        val = self.GLOBAL_SCOPE.get(var_name.upper())
         if val is None:
             raise NameError(repr(var_name))
         else:
@@ -464,15 +461,17 @@ class Interpreter(NodeVisitor):
             return ''
         return self.visit(tree)
 
-def main():
-    import sys
-    text = open(sys.argv[1], 'r').read()
-
+def evaluate(text):
     lexer = Lexer(text)
     parser = Parser(lexer)
     interpreter = Interpreter(parser)
     result = interpreter.interpret()
-    print(interpreter.GLOBAL_SCOPE)
+    return interpreter.GLOBAL_SCOPE
+
+def main():
+    import sys
+    text = open(sys.argv[1], 'r').read()
+    print(evaluate(text))
 
 
 if __name__ == '__main__':
