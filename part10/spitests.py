@@ -120,6 +120,10 @@ END.
         )
         self.assertEqual(ast, expected)
 
+    def test_parser_program(self):
+        ast = parse(sample_program)
+        self.assertNotEqual(ast, None)  # just want to make sure it runs
+
 
 if __name__ == '__main__':
     unittest.main()

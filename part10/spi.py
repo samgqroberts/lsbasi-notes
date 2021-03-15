@@ -347,28 +347,38 @@ class Parser(object):
         if self.current_token.type == VAR:
             self.eat(VAR)
             while (self.current_token.type == ID):
-                decls.append(self.variable_declaration())
+                decls += self.variable_declaration()
                 self.eat(SEMI)
         return decls
 
     def variable_declaration(self):
-        var = self.variable()
+        vars = [self.variable()]
+        while self.current_token.type == COMMA:
+            self.eat(COMMA)
+            vars.append(self.variable())
         self.eat(COLON)
         type = self.type_spec()
-        return VarDecl(var, type)
+        return [VarDecl(var, type) for var in vars]
 
     def type_spec(self):
-        return Type(self.eat(INTEGER))
+        if self.current_token.type == INTEGER:
+            return Type(self.eat(INTEGER))
+        if self.current_token.type == REAL:
+            return Type(self.eat(REAL))
+        self.error()
 
     def compound_statement(self):
         self.eat(BEGIN)
         stmt_list = self.statement_list()
+        if self.current_token.type == SEMI:
+            self.eat(SEMI)
         self.eat(END)
         return Compound(stmt_list)
 
     def statement_list(self):
         stmts = [self.statement()]
-        while (self.current_token == SEMI):
+        while self.current_token.type == SEMI:
+            self.eat(SEMI)
             stmts.append(self.statement())
         return stmts
 
@@ -389,14 +399,45 @@ class Parser(object):
         pass
 
     def expr(self):
-        node = self.eat(INTEGER_CONST)
-        return Num(node)
+        node = self.term()
+        while self.current_token.type in [PLUS, MINUS]:
+            if self.current_token.type == PLUS:
+                token = self.eat(PLUS)
+            if self.current_token.type == MINUS:
+                token = self.eat(MINUS)
+            node = BinOp(node, token, self.term())
+        return node
 
     def term(self):
-        pass
+        node = self.factor()
+        while self.current_token.type in [MUL, INTEGER_DIV, FLOAT_DIV]:
+            if self.current_token.type == MUL:
+                token = self.eat(MUL)
+            if self.current_token.type == INTEGER_DIV:
+                token = self.eat(INTEGER_DIV)
+            if self.current_token.type == FLOAT_DIV:
+                token = self.eat(FLOAT_DIV)
+            node = BinOp(node, token, self.factor())
+        return node
 
     def factor(self):
-        pass
+        if self.current_token.type == PLUS:
+            return UnaryOp(self.eat(PLUS), self.factor())
+        if self.current_token.type == MINUS:
+            return UnaryOp(self.eat(MINUS), self.factor())
+        if self.current_token.type == INTEGER_CONST:
+            return Num(self.eat(INTEGER_CONST))
+        if self.current_token.type == REAL_CONST:
+            return Num(self.eat(REAL_CONST))
+        if self.current_token.type == LPAREN:
+            self.eat(LPAREN)
+            node = self.expr()
+            self.eat(RPAREN)
+            return node
+        if self.current_token.type == ID:
+            return Var(self.eat(ID))
+        self.error('unexpected factor. current token: ' +
+                   str(self.current_token))
 
     def variable(self):
         node = self.eat(ID)
