@@ -1,7 +1,6 @@
-from spi import INTEGER_DIV
 import unittest
 
-from spi import lex, Lexer, parse, Token, Program, Compound, Block, INTEGER_CONST, PLUS, MINUS, PROGRAM, LPAREN, REAL_CONST, RPAREN, ID, SEMI, VAR, COLON, INTEGER, COMMA, REAL, BEGIN, ASSIGN, MUL, END, FLOAT_DIV, DOT
+from spi import lex, Lexer, Num, parse, VarDecl, Assign, Var, Type, Token, Program, Compound, Block, INTEGER_CONST, PLUS, MINUS, PROGRAM, LPAREN, REAL_CONST, RPAREN, ID, SEMI, VAR, COLON, INTEGER, COMMA, REAL, BEGIN, ASSIGN, MUL, END, FLOAT_DIV, DOT, INTEGER_DIV
 
 sample_program = open("part10.pas", "r").read()
 
@@ -95,9 +94,30 @@ class TestSuite(unittest.TestCase):
         self.assertEqual(tokens, expected)
 
     def test_parser_simple(self):
-        text = 'PROGRAM myprgrm; BEGIN END.'
-        ast = parse(text)
-        expected = Program('myprgrm', Block([], Compound([])))
+        program = """
+PROGRAM onevar;
+
+VAR
+    x : INTEGER;
+
+BEGIN
+    x := 3
+END.
+    """
+        ast = parse(program)
+        expected = Program(
+            'onevar',
+            Block(
+                [VarDecl(
+                    Var(Token(ID, 'x')),
+                    Type(Token(INTEGER, 'INTEGER'))
+                )],
+                Compound([
+                    Assign(Var(Token(ID, 'x')), Token(ASSIGN, ':='),
+                           Num(Token(INTEGER_CONST, 3)))
+                ])
+            )
+        )
         self.assertEqual(ast, expected)
 
 

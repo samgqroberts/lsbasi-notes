@@ -217,11 +217,23 @@ class VarDecl(AST):
         self.var_node = var_node
         self.type_node = type_node
 
+    def __repr__(self):
+        return 'VarDecl(' + str(self.var_node) + ', ' + str(self.type_node) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, VarDecl) and obj.var_node == self.var_node and obj.type_node == self.type_node
+
 
 class Type(AST):
     def __init__(self, token):
         self.token = token
         self.value = token.value
+
+    def __repr__(self):
+        return 'Type(' + str(self.token) + ', ' + str(self.token) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Type) and obj.token == self.token and obj.value == self.value
 
 
 class Compound(AST):
@@ -241,6 +253,12 @@ class Assign(AST):
         self.token = self.op = op
         self.right = right
 
+    def __repr__(self):
+        return 'Assign(' + str(self.left) + ', ' + str(self.token) + ', ' + str(self.right) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Assign) and obj.left == self.left and obj.token == self.token and obj.right == self.right
+
 
 class BinOp(AST):
     def __init__(self, left, op, right):
@@ -248,11 +266,23 @@ class BinOp(AST):
         self.token = self.op = op
         self.right = right
 
+    def __repr__(self):
+        return 'BinOp(' + str(self.left) + ', ' + str(self.token) + ', ' + str(self.right) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, BinOp) and obj.left == self.left and obj.token == self.token and obj.right == self.right
+
 
 class Num(AST):
     def __init__(self, token):
         self.token = token
         self.value = token.value
+
+    def __repr__(self):
+        return 'Num(' + str(self.token) + ', ' + str(self.value) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Num) and obj.token == self.token and obj.value == self.value
 
 
 class UnaryOp(AST):
@@ -260,11 +290,23 @@ class UnaryOp(AST):
         self.token = self.op = op
         self.expr = expr
 
+    def __repr__(self):
+        return 'UnaryOp(' + str(self.token) + ', ' + str(self.expr) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, UnaryOp) and obj.token == self.token and obj.expr == self.expr
+
 
 class Var(AST):
     def __init__(self, token):
         self.token = token
         self.value = token.value
+
+    def __repr__(self):
+        return 'Var(' + str(self.token) + ', ' + str(self.value) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Var) and obj.token == self.token and obj.value == self.value
 
 
 class NoOp(AST):
@@ -310,10 +352,13 @@ class Parser(object):
         return decls
 
     def variable_declaration(self):
-        pass
+        var = self.variable()
+        self.eat(COLON)
+        type = self.type_spec()
+        return VarDecl(var, type)
 
     def type_spec(self):
-        pass
+        return Type(self.eat(INTEGER))
 
     def compound_statement(self):
         self.eat(BEGIN)
@@ -322,19 +367,30 @@ class Parser(object):
         return Compound(stmt_list)
 
     def statement_list(self):
-        return []
+        stmts = [self.statement()]
+        while (self.current_token == SEMI):
+            stmts.append(self.statement())
+        return stmts
 
     def statement(self):
-        pass
+        if (self.current_token.type == BEGIN):
+            return self.compound_statement()
+        if (self.current_token.type == ID):
+            return self.assignment_statement()
+        return self.empty()
 
     def assignment_statement(self):
-        pass
+        left = self.variable()
+        token = self.eat(ASSIGN)
+        right = self.expr()
+        return Assign(left, token, right)
 
     def empty(self):
         pass
 
     def expr(self):
-        pass
+        node = self.eat(INTEGER_CONST)
+        return Num(node)
 
     def term(self):
         pass
