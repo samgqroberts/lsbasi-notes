@@ -1,7 +1,7 @@
-"""
+'''
 If you haven't done so yet, then, as an exercise, re-implement the interpreter in this article
 without looking at the source code and use part10.pas as your test input file.
-"""
+'''
 
 # Token Types
 PROGRAM = 'PROGRAM'
@@ -454,3 +454,55 @@ class Parser(object):
 def parse(text):
     lexer = Lexer(text)
     return Parser(lexer).parse()
+
+
+class NodeVisitor(object):
+    def visit(self, node):
+        method_name = "visit_{}".format(type(node).__name__)
+        return getattr(self, method_name)(node)
+
+
+class Interpreter(NodeVisitor):
+    def __init__(self, parser):
+        self.parser = parser
+        self.scope = {}
+
+    def visit_Program(self, program):
+        self.visit(program.block)
+
+    def visit_Block(self, block):
+        # initialize variables
+        for decl in block.declarations:
+            self.visit(decl)
+        self.visit(block.compound_statement)
+
+    def visit_VarDecl(self, var_decl):
+        if var_decl.type_node.value == INTEGER:
+            initial_value = 0
+        if var_decl.type_node.value == REAL:
+            initial_value = 0.0
+        self.scope[var_decl.var_node.value] = initial_value
+
+    def visit_Compound(self, compound):
+        for child in compound.children:
+            self.visit(child)
+
+    def visit_Assign(self, assign):
+        var = assign.left.value
+        value = self.visit(assign.right)
+        self.scope[var] = value
+
+    def visit_Num(self, num):
+        return num.value
+
+    def interpret(self):
+        node = self.parser.parse()
+        self.visit(node)
+
+
+def evaluate(text):
+    lexer = Lexer(text)
+    parser = Parser(lexer)
+    interpreter = Interpreter(parser)
+    interpreter.interpret()
+    return interpreter.scope

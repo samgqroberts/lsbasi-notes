@@ -1,6 +1,6 @@
 import unittest
 
-from spi import lex, Lexer, Num, parse, VarDecl, Assign, Var, Type, Token, Program, Compound, Block, INTEGER_CONST, PLUS, MINUS, PROGRAM, LPAREN, REAL_CONST, RPAREN, ID, SEMI, VAR, COLON, INTEGER, COMMA, REAL, BEGIN, ASSIGN, MUL, END, FLOAT_DIV, DOT, INTEGER_DIV
+from spi import lex, evaluate, Lexer, Num, parse, VarDecl, Assign, Var, Type, Token, Program, Compound, Block, INTEGER_CONST, PLUS, MINUS, PROGRAM, LPAREN, REAL_CONST, RPAREN, ID, SEMI, VAR, COLON, INTEGER, COMMA, REAL, BEGIN, ASSIGN, MUL, END, FLOAT_DIV, DOT, INTEGER_DIV
 
 sample_program = open("part10.pas", "r").read()
 
@@ -123,6 +123,21 @@ END.
     def test_parser_program(self):
         ast = parse(sample_program)
         self.assertNotEqual(ast, None)  # just want to make sure it runs
+
+    def test_interpret_simple(self):
+        program = """
+PROGRAM onevar;
+
+VAR
+    x : INTEGER;
+
+BEGIN
+    x := 3
+END.
+    """
+        scope = evaluate(program)
+        expected = {'x': 3}
+        self.assertEqual(scope, expected)
 
 
 if __name__ == '__main__':
