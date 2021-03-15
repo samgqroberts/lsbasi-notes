@@ -139,6 +139,24 @@ END.
         expected = {'x': 3}
         self.assertEqual(scope, expected)
 
+    def test_interpret_program(self):
+        scope = evaluate(sample_program)
+        number = 2
+        a = number
+        b = 10 * a + 10 * number // 4
+        c = 2 - - b
+        x = 11
+        y = 20 / 7 + 3.14
+        expected = {
+            'number': number,
+            'a': a,
+            'b': b,
+            'c': c,
+            'x': x,
+            'y': y
+        }
+        self.assertEqual(scope, expected)
+
 
 if __name__ == '__main__':
     unittest.main()

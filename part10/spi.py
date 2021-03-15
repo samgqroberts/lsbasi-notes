@@ -396,7 +396,7 @@ class Parser(object):
         return Assign(left, token, right)
 
     def empty(self):
-        pass
+        return NoOp()
 
     def expr(self):
         node = self.term()
@@ -494,6 +494,33 @@ class Interpreter(NodeVisitor):
 
     def visit_Num(self, num):
         return num.value
+
+    def visit_Var(self, var):
+        return self.scope[var.value]
+
+    def visit_BinOp(self, bin_op):
+        left = self.visit(bin_op.left)
+        right = self.visit(bin_op.right)
+        op = bin_op.op
+        if op.type == PLUS:
+            return left + right
+        if op.type == MINUS:
+            return left - right
+        if op.type == MUL:
+            return left * right
+        if op.type == INTEGER_DIV:
+            return left // right
+        if op.type == FLOAT_DIV:
+            return left / right
+
+    def visit_UnaryOp(self, unary_op):
+        if unary_op.op.type == PLUS:
+            return self.visit(unary_op.expr)
+        if unary_op.op.type == MINUS:
+            return -self.visit(unary_op.expr)
+
+    def visit_NoOp(self, no_op):
+        pass
 
     def interpret(self):
         node = self.parser.parse()
