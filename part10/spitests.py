@@ -1,8 +1,7 @@
 from spi import INTEGER_DIV
 import unittest
 
-# , parse, evaluate
-from spi import lex, Token, INTEGER_CONST, PLUS, MINUS, PROGRAM, LPAREN, REAL_CONST, RPAREN, ID, SEMI, VAR, COLON, INTEGER, COMMA, REAL, BEGIN, ASSIGN, MUL, END, FLOAT_DIV, DOT
+from spi import lex, Lexer, parse, Token, Program, Compound, Block, INTEGER_CONST, PLUS, MINUS, PROGRAM, LPAREN, REAL_CONST, RPAREN, ID, SEMI, VAR, COLON, INTEGER, COMMA, REAL, BEGIN, ASSIGN, MUL, END, FLOAT_DIV, DOT
 
 sample_program = open("part10.pas", "r").read()
 
@@ -94,6 +93,12 @@ class TestSuite(unittest.TestCase):
             Token(DOT, '.')
         ]
         self.assertEqual(tokens, expected)
+
+    def test_parser_simple(self):
+        text = 'PROGRAM myprgrm; BEGIN END.'
+        ast = parse(text)
+        expected = Program('myprgrm', Block([], Compound([])))
+        self.assertEqual(ast, expected)
 
 
 if __name__ == '__main__':

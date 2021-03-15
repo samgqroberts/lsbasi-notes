@@ -182,3 +182,178 @@ def lex(text):
         tokens.append(nextToken)
         nextToken = lexer.get_next_token()
     return tokens
+
+
+class AST(object):
+    pass
+
+
+class Program(AST):
+    def __init__(self, name, block):
+        self.name = name
+        self.block = block
+
+    def __repr__(self):
+        return 'Program(' + str(self.name) + ', ' + str(self.block) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Program) and obj.name == self.name and obj.block == self.block
+
+
+class Block(AST):
+    def __init__(self, declarations, compound_statement):
+        self.declarations = declarations
+        self.compound_statement = compound_statement
+
+    def __repr__(self):
+        return 'Block(' + str(self.declarations) + ', ' + str(self.compound_statement) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Block) and obj.declarations == self.declarations and obj.compound_statement == self.compound_statement
+
+
+class VarDecl(AST):
+    def __init__(self, var_node, type_node):
+        self.var_node = var_node
+        self.type_node = type_node
+
+
+class Type(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+
+class Compound(AST):
+    def __init__(self, children):
+        self.children = children
+
+    def __repr__(self):
+        return 'Compound(' + str(self.children) + ')'
+
+    def __eq__(self, obj):
+        return isinstance(obj, Compound) and obj.children == self.children
+
+
+class Assign(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.token = self.op = op
+        self.right = right
+
+
+class BinOp(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.token = self.op = op
+        self.right = right
+
+
+class Num(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+
+class UnaryOp(AST):
+    def __init__(self, op, expr):
+        self.token = self.op = op
+        self.expr = expr
+
+
+class Var(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+
+class NoOp(AST):
+    pass
+
+
+class Parser(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.current_token = self.lexer.get_next_token()
+
+    def error(self, msg):
+        raise Exception('Error parsing: ' + msg)
+
+    def eat(self, type):
+        if self.current_token.type != type:
+            self.error('Expected current token to be ' + type +
+                       '. Found: ' + self.current_token.type)
+        node = self.current_token
+        self.current_token = self.lexer.get_next_token()
+        return node
+
+    def program(self):
+        self.eat(PROGRAM)
+        var = self.variable()
+        self.eat(SEMI)
+        block = self.block()
+        self.eat(DOT)
+        return Program(var.value, block)
+
+    def block(self):
+        declarations = self.declarations()
+        compound_statement = self.compound_statement()
+        return Block(declarations, compound_statement)
+
+    def declarations(self):
+        decls = []
+        if self.current_token.type == VAR:
+            self.eat(VAR)
+            while (self.current_token.type == ID):
+                decls.append(self.variable_declaration())
+                self.eat(SEMI)
+        return decls
+
+    def variable_declaration(self):
+        pass
+
+    def type_spec(self):
+        pass
+
+    def compound_statement(self):
+        self.eat(BEGIN)
+        stmt_list = self.statement_list()
+        self.eat(END)
+        return Compound(stmt_list)
+
+    def statement_list(self):
+        return []
+
+    def statement(self):
+        pass
+
+    def assignment_statement(self):
+        pass
+
+    def empty(self):
+        pass
+
+    def expr(self):
+        pass
+
+    def term(self):
+        pass
+
+    def factor(self):
+        pass
+
+    def variable(self):
+        node = self.eat(ID)
+        return Var(node)
+
+    def parse(self):
+        node = self.program()
+        if (self.current_token.type is not EOF):
+            self.error(
+                'Parsed program, but next token is not EOF. Found: ' + str(self.current_token))
+        return node
+
+
+def parse(text):
+    lexer = Lexer(text)
+    return Parser(lexer).parse()
